@@ -180,3 +180,5 @@ alerting:
     summary: "Alertmanager is down"
     description: "Alertmanager instance {{ $labels.instance }} is down"
 ``` 
+
+Author: Yuriy Kulakov

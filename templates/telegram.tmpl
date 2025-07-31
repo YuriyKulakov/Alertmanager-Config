@@ -1,0 +1,62 @@
+{{ define "telegram.message" }}
+{{ if eq .Status "firing" }}🚨{{ else }}✅{{ end }} <b>{{ .GroupLabels.alertname }}</b>
+
+{{ if eq .Status "firing" }}
+Status: <b>{{ .Status | toUpper }}</b>
+Alerts: <b>{{ .Alerts.Firing | len }}</b>
+{{ else }}
+Status: <b>RESOLVED</b>
+{{ end }}
+
+{{ range .Alerts }}
+{{ if eq .Status "firing" }}🔴{{ else }}🟢{{ end }} <b>{{ .Annotations.summary | default .Labels.alertname }}</b>
+
+{{ if .Annotations.description }}
+📝 {{ .Annotations.description }}
+{{ end }}
+
+{{ if .Labels.instance }}
+🖥️ Instance: <code>{{ .Labels.instance }}</code>
+{{ end }}
+
+{{ if .Labels.service }}
+🔧 Service: <code>{{ .Labels.service }}</code>
+{{ end }}
+
+{{ if .Labels.severity }}
+⚠️ Severity: <code>{{ .Labels.severity }}</code>
+{{ end }}
+
+⏰ Started: {{ .StartsAt | since }}
+{{ if .EndsAt }}
+✅ Resolved: {{ .EndsAt | since }}
+{{ end }}
+
+{{ if .Labels }}
+🏷️ Labels:
+{{ range .Labels.SortedPairs }}
+  • <code>{{ .Name }}: {{ .Value }}</code>
+{{ end }}
+{{ end }}
+
+{{ if .Annotations }}
+📋 Annotations:
+{{ range .Annotations.SortedPairs }}
+  • <code>{{ .Name }}: {{ .Value }}</code>
+{{ end }}
+{{ end }}
+
+{{ end }}
+{{ end }}
+
+{{ define "telegram.critical" }}
+🚨 <b>CRITICAL ALERT</b> 🚨
+
+{{ template "telegram.message" . }}
+{{ end }}
+
+{{ define "telegram.warning" }}
+⚠️ <b>WARNING ALERT</b> ⚠️
+
+{{ template "telegram.message" . }}
+{{ end }} 

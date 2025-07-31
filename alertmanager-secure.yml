@@ -1,0 +1,83 @@
+global:
+  # Настройки SMTP для отправки email
+  smtp_smarthost: '${SMTP_HOST}:${SMTP_PORT}'
+  smtp_from: '${SMTP_FROM}'
+  smtp_auth_username: '${SMTP_USERNAME}'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+  smtp_require_tls: true
+
+# Настройки маршрутизации
+route:
+  # Группировка алертов
+  group_by: ['alertname', 'cluster', 'service']
+  
+  # Время группировки
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  
+  # Получатель по умолчанию
+  receiver: 'team-notifications'
+  
+  # Правила маршрутизации
+  routes:
+  - match:
+      severity: critical
+    receiver: 'critical-alerts'
+    continue: true
+  
+  - match:
+      severity: warning
+    receiver: 'warning-alerts'
+    continue: true
+
+# Получатели уведомлений
+receivers:
+- name: 'team-notifications'
+  email_configs:
+  - to: '${TEAM_EMAIL}'
+    send_resolved: true
+    headers:
+      subject: '{{ template "email.subject" . }}'
+    html: '{{ template "email.html" . }}'
+  
+  telegram_configs:
+  - bot_token: '${TELEGRAM_BOT_TOKEN}'
+    chat_id: '${TELEGRAM_CHAT_ID}'
+    parse_mode: 'HTML'
+    message: '{{ template "telegram.message" . }}'
+    send_resolved: true
+
+- name: 'critical-alerts'
+  email_configs:
+  - to: '${ADMIN_EMAIL}'
+    send_resolved: true
+    headers:
+      subject: '🚨 CRITICAL: {{ template "email.subject" . }}'
+    html: '{{ template "email.critical" . }}'
+  
+  telegram_configs:
+  - bot_token: '${TELEGRAM_BOT_TOKEN}'
+    chat_id: '${ADMIN_TELEGRAM_CHAT_ID}'
+    parse_mode: 'HTML'
+    message: '{{ template "telegram.critical" . }}'
+    send_resolved: true
+
+- name: 'warning-alerts'
+  email_configs:
+  - to: '${TEAM_EMAIL}'
+    send_resolved: true
+    headers:
+      subject: '⚠️ WARNING: {{ template "email.subject" . }}'
+    html: '{{ template "email.warning" . }}'
+  
+  telegram_configs:
+  - bot_token: '${TELEGRAM_BOT_TOKEN}'
+    chat_id: '${TELEGRAM_CHAT_ID}'
+    parse_mode: 'HTML'
+    message: '{{ template "telegram.warning" . }}'
+    send_resolved: true
+
+# Шаблоны для email
+templates:
+- '/etc/alertmanager/template/*.tmpl' 

@@ -1,0 +1,151 @@
+{{ define "email.subject" }}
+[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.alertname }}
+{{ end }}
+
+{{ define "email.html" }}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ template "email.subject" . }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .alert { border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 5px; }
+        .firing { background-color: #ffebee; border-color: #f44336; }
+        .resolved { background-color: #e8f5e8; border-color: #4caf50; }
+        .critical { background-color: #ffebee; border-color: #f44336; }
+        .warning { background-color: #fff3e0; border-color: #ff9800; }
+        .info { background-color: #e3f2fd; border-color: #2196f3; }
+        .label { background-color: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 12px; margin: 2px; }
+        .timestamp { color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h2>{{ template "email.subject" . }}</h2>
+    
+    <p><strong>Status:</strong> {{ .Status | toUpper }}</p>
+    <p><strong>Group:</strong> {{ .GroupLabels.alertname }}</p>
+    <p><strong>Time:</strong> {{ .StartsAt | since }}</p>
+    
+    {{ range .Alerts }}
+    <div class="alert {{ .Status }} {{ .Labels.severity }}">
+        <h3>{{ .Annotations.summary | default .Labels.alertname }}</h3>
+        <p><strong>Description:</strong> {{ .Annotations.description | default "No description provided" }}</p>
+        <p><strong>Severity:</strong> <span class="label">{{ .Labels.severity | default "unknown" }}</span></p>
+        <p><strong>Instance:</strong> <span class="label">{{ .Labels.instance | default "unknown" }}</span></p>
+        <p><strong>Service:</strong> <span class="label">{{ .Labels.service | default "unknown" }}</span></p>
+        <p class="timestamp"><strong>Started:</strong> {{ .StartsAt | since }}</p>
+        {{ if .EndsAt }}
+        <p class="timestamp"><strong>Resolved:</strong> {{ .EndsAt | since }}</p>
+        {{ end }}
+        
+        {{ if .Labels }}
+        <p><strong>Labels:</strong></p>
+        <ul>
+        {{ range .Labels.SortedPairs }}
+            <li><strong>{{ .Name }}:</strong> {{ .Value }}</li>
+        {{ end }}
+        </ul>
+        {{ end }}
+        
+        {{ if .Annotations }}
+        <p><strong>Annotations:</strong></p>
+        <ul>
+        {{ range .Annotations.SortedPairs }}
+            <li><strong>{{ .Name }}:</strong> {{ .Value }}</li>
+        {{ end }}
+        </ul>
+        {{ end }}
+    </div>
+    {{ end }}
+</body>
+</html>
+{{ end }}
+
+{{ define "email.critical" }}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>🚨 CRITICAL: {{ template "email.subject" . }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .alert { border: 2px solid #f44336; margin: 10px 0; padding: 15px; border-radius: 5px; background-color: #ffebee; }
+        .label { background-color: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 12px; margin: 2px; }
+        .timestamp { color: #666; font-size: 12px; }
+        .critical-header { color: #d32f2f; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2 class="critical-header">🚨 CRITICAL ALERT</h2>
+    <h3>{{ template "email.subject" . }}</h3>
+    
+    <p><strong>Status:</strong> {{ .Status | toUpper }}</p>
+    <p><strong>Group:</strong> {{ .GroupLabels.alertname }}</p>
+    <p><strong>Time:</strong> {{ .StartsAt | since }}</p>
+    
+    {{ range .Alerts }}
+    <div class="alert">
+        <h3>{{ .Annotations.summary | default .Labels.alertname }}</h3>
+        <p><strong>Description:</strong> {{ .Annotations.description | default "No description provided" }}</p>
+        <p><strong>Instance:</strong> <span class="label">{{ .Labels.instance | default "unknown" }}</span></p>
+        <p><strong>Service:</strong> <span class="label">{{ .Labels.service | default "unknown" }}</span></p>
+        <p class="timestamp"><strong>Started:</strong> {{ .StartsAt | since }}</p>
+        
+        {{ if .Labels }}
+        <p><strong>Labels:</strong></p>
+        <ul>
+        {{ range .Labels.SortedPairs }}
+            <li><strong>{{ .Name }}:</strong> {{ .Value }}</li>
+        {{ end }}
+        </ul>
+        {{ end }}
+    </div>
+    {{ end }}
+</body>
+</html>
+{{ end }}
+
+{{ define "email.warning" }}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>⚠️ WARNING: {{ template "email.subject" . }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .alert { border: 2px solid #ff9800; margin: 10px 0; padding: 15px; border-radius: 5px; background-color: #fff3e0; }
+        .label { background-color: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 12px; margin: 2px; }
+        .timestamp { color: #666; font-size: 12px; }
+        .warning-header { color: #f57c00; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2 class="warning-header">⚠️ WARNING ALERT</h2>
+    <h3>{{ template "email.subject" . }}</h3>
+    
+    <p><strong>Status:</strong> {{ .Status | toUpper }}</p>
+    <p><strong>Group:</strong> {{ .GroupLabels.alertname }}</p>
+    <p><strong>Time:</strong> {{ .StartsAt | since }}</p>
+    
+    {{ range .Alerts }}
+    <div class="alert">
+        <h3>{{ .Annotations.summary | default .Labels.alertname }}</h3>
+        <p><strong>Description:</strong> {{ .Annotations.description | default "No description provided" }}</p>
+        <p><strong>Instance:</strong> <span class="label">{{ .Labels.instance | default "unknown" }}</span></p>
+        <p><strong>Service:</strong> <span class="label">{{ .Labels.service | default "unknown" }}</span></p>
+        <p class="timestamp"><strong>Started:</strong> {{ .StartsAt | since }}</p>
+        
+        {{ if .Labels }}
+        <p><strong>Labels:</strong></p>
+        <ul>
+        {{ range .Labels.SortedPairs }}
+            <li><strong>{{ .Name }}:</strong> {{ .Value }}</li>
+        {{ end }}
+        </ul>
+        {{ end }}
+    </div>
+    {{ end }}
+</body>
+</html>
+{{ end }} 

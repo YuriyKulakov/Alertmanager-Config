@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./templates:/etc/alertmanager/template
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.listen-address=:9093'
+      - '--cluster.listen-address=:9094'
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+volumes:
+  alertmanager_data:
+
+networks:
+  monitoring:
+    driver: bridge 
